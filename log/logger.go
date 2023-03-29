@@ -47,6 +47,10 @@ func Default() *Logger {
 	return &logger
 }
 
+func (l *Logger) SetNC(nc *nats.Conn) {
+	l.nc = nc
+}
+
 func (l *Logger) SetInfoDepth(depth int) {
 	l.FileInfoDepth = depth
 }
