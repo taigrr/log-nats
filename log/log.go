@@ -39,8 +39,7 @@ func (l *Logger) createLog(e Entry) {
 	buf := bytes.NewBuffer([]byte{})
 	ut.Execute(buf, e)
 	b, _ := json.Marshal(e)
-
-	l.nc.Publish(buf.String(), []byte(string(b)))
+	l.nc.Publish(buf.String(), b)
 }
 
 // SetLogLevel set log level of logger
