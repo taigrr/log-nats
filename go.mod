@@ -1,6 +1,6 @@
 module github.com/taigrr/log-nats
 
-go 1.16
+go 1.21
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect
