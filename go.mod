@@ -1,10 +1,13 @@
 module github.com/taigrr/log-nats
 
-go 1.21
+go 1.26.0
+
+require github.com/nats-io/nats.go v1.48.0
 
 require (
-	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/nats-io/nats-server/v2 v2.9.15 // indirect
-	github.com/nats-io/nats.go v1.25.0
-	google.golang.org/protobuf v1.30.0 // indirect
+	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/nats-io/nkeys v0.4.15 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 )

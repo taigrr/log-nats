@@ -27,6 +27,12 @@ func (l *Logger) SetSubscriptionTemplate(template string) {
 }
 
 func (l *Logger) createLog(e Entry) {
+	if e.level < l.LogLevel {
+		return
+	}
+	if l.nc == nil {
+		return
+	}
 	temp := template.New("")
 	if l.SubTemplate == "" {
 		l.SubTemplate = Default().SubTemplate
