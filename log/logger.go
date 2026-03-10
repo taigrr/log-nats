@@ -4,341 +4,337 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 	"time"
-
-	"github.com/nats-io/nats.go"
 )
 
-var (
-	gNats       *nats.Conn
-	connNats    sync.Once
-	natsConnURL string
-)
-
-func init() {
-	natsConnURL = nats.DefaultURL
-}
-
-func ConnectDefault(url string, opts ...nats.Option) error {
-	connNats.Do(func() {})
-	nc, err := nats.Connect(url, opts...)
-	gNats = nc
-	return err
-}
-
-func SetDefaultConn(nc *nats.Conn) {
-	connNats.Do(func() {})
-	gNats = nc
-}
-
+// Default returns a Logger using the default namespace.
 func Default() *Logger {
-	connNats.Do(func() {
-		var err error
-		gNats, err = nats.Connect(natsConnURL)
-		if err != nil {
-			gNats = nil
-		}
-	})
-	logger := Logger{FileInfoDepth: 0, LogLevel: LWarn, initialized: true, nc: gNats, SubTemplate: "global.logging.{{.Level}}"}
-	if gNats == nil {
-		logger.initialized = false
+	return &Logger{FileInfoDepth: 0, Namespace: DefaultNamespace}
+}
+
+// NewLogger returns a Logger using the given namespace. If namespace is empty,
+// DefaultNamespace is used.
+func NewLogger(namespace string) *Logger {
+	if namespace == "" {
+		namespace = DefaultNamespace
 	}
-	return &logger
+	return &Logger{FileInfoDepth: 0, Namespace: namespace}
 }
 
-func (l *Logger) SetNC(nc *nats.Conn) {
-	l.nc = nc
-}
-
+// SetInfoDepth sets the additional caller skip depth for file info.
 func (l *Logger) SetInfoDepth(depth int) {
 	l.FileInfoDepth = depth
 }
 
 // Trace prints out logs on trace level
-func (l Logger) Trace(args ...interface{}) {
+func (l Logger) Trace(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "TRACE",
 		level:     LTrace,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for Trace
-func (l Logger) Tracef(format string, args ...interface{}) {
+// Tracef is a formatted print for Trace
+func (l Logger) Tracef(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "TRACE",
 		level:     LTrace,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Trace prints out logs on trace level with newline
-func (l Logger) Traceln(args ...interface{}) {
+// Traceln prints out logs on trace level with newline
+func (l Logger) Traceln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "TRACE",
 		level:     LTrace,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
 // Debug prints out logs on debug level
-func (l Logger) Debug(args ...interface{}) {
+func (l Logger) Debug(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "DEBUG",
 		level:     LDebug,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for Debug
-func (l Logger) Debugf(format string, args ...interface{}) {
+// Debugf is a formatted print for Debug
+func (l Logger) Debugf(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "DEBUG",
 		level:     LDebug,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
+}
+
+// Debugln prints out logs on debug level with a newline
+func (l Logger) Debugln(args ...any) {
+	output := fmt.Sprintln(args...)
+	e := Entry{
+		Timestamp: time.Now(),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
+		Level:     "DEBUG",
+		level:     LDebug,
+		Namespace: l.Namespace,
+	}
+	createLog(e)
 }
 
 // Info prints out logs on info level
-func (l Logger) Info(args ...interface{}) {
+func (l Logger) Info(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "INFO",
 		level:     LInfo,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for Info
-func (l Logger) Infof(format string, args ...interface{}) {
+// Infof is a formatted print for Info
+func (l Logger) Infof(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "INFO",
 		level:     LInfo,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Info prints out logs on info level with newline
-func (l Logger) Infoln(args ...interface{}) {
+// Infoln prints out logs on info level with newline
+func (l Logger) Infoln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "INFO",
 		level:     LInfo,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
 // Notice prints out logs on notice level
-func (l Logger) Notice(args ...interface{}) {
+func (l Logger) Notice(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "NOTICE",
 		level:     LNotice,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for Notice
-func (l Logger) Noticef(format string, args ...interface{}) {
+// Noticef is a formatted print for Notice
+func (l Logger) Noticef(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "NOTICE",
 		level:     LNotice,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Notice prints out logs on notice level with newline
-func (l Logger) Noticeln(args ...interface{}) {
+// Noticeln prints out logs on notice level with newline
+func (l Logger) Noticeln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "NOTICE",
 		level:     LNotice,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
 // Warn prints out logs on warn level
-func (l Logger) Warn(args ...interface{}) {
+func (l Logger) Warn(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "WARN",
 		level:     LWarn,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for Warn
-func (l Logger) Warnf(format string, args ...interface{}) {
+// Warnf is a formatted print for Warn
+func (l Logger) Warnf(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "WARN",
 		level:     LWarn,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Warn prints out logs on warn level with a newline
-func (l Logger) Warnln(args ...interface{}) {
+// Warnln prints out logs on warn level with a newline
+func (l Logger) Warnln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "WARN",
 		level:     LWarn,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
 // Error prints out logs on error level
-func (l Logger) Error(args ...interface{}) {
+func (l Logger) Error(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "ERROR",
 		level:     LError,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Formatted print for error
-func (l Logger) Errorf(format string, args ...interface{}) {
+// Errorf is a formatted print for Error
+func (l Logger) Errorf(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "ERROR",
 		level:     LError,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
-// Error prints out logs on error level with a new line
-func (l Logger) Errorln(args ...interface{}) {
+// Errorln prints out logs on error level with a new line
+func (l Logger) Errorln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "ERROR",
 		level:     LError,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 }
 
 // Panic prints out logs on panic level
-func (l Logger) Panic(args ...interface{}) {
+func (l Logger) Panic(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "PANIC",
 		level:     LPanic,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
-	if len(args) >= 0 {
-		switch args[0].(type) {
-		case error:
-			panic(args[0])
-		default:
-			// falls through to default below
+	createLog(e)
+	if len(args) > 0 {
+		if err, ok := args[0].(error); ok {
+			panic(err)
 		}
 	}
 	Flush()
 	panic(errors.New(output))
 }
 
-// Formatted print for panic
-func (l Logger) Panicf(format string, args ...interface{}) {
+// Panicf is a formatted print for Panic
+func (l Logger) Panicf(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "PANIC",
 		level:     LPanic,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
-	if len(args) >= 0 {
-		switch args[0].(type) {
-		case error:
-			panic(args[0])
-		default:
-			// falls through to default below
+	createLog(e)
+	if len(args) > 0 {
+		if err, ok := args[0].(error); ok {
+			panic(err)
 		}
 	}
 	Flush()
 	panic(errors.New(output))
 }
 
-// Panic prints out logs on panic level with a newline
-func (l Logger) Panicln(args ...interface{}) {
+// Panicln prints out logs on panic level with a newline
+func (l Logger) Panicln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "PANIC",
 		level:     LPanic,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
-	if len(args) >= 0 {
-		switch args[0].(type) {
-		case error:
-			panic(args[0])
-		default:
-			// falls through to default below
+	createLog(e)
+	if len(args) > 0 {
+		if err, ok := args[0].(error); ok {
+			panic(err)
 		}
 	}
 	Flush()
@@ -346,61 +342,64 @@ func (l Logger) Panicln(args ...interface{}) {
 }
 
 // Fatal prints out logs on fatal level
-func (l Logger) Fatal(args ...interface{}) {
+func (l Logger) Fatal(args ...any) {
 	output := fmt.Sprint(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "FATAL",
 		level:     LFatal,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 	Flush()
 	os.Exit(1)
 }
 
-// Formatted print for fatal
-func (l Logger) Fatalf(format string, args ...interface{}) {
+// Fatalf is a formatted print for Fatal
+func (l Logger) Fatalf(format string, args ...any) {
 	output := fmt.Sprintf(format, args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "FATAL",
 		level:     LFatal,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 	Flush()
 	os.Exit(1)
 }
 
-// Fatal prints fatal level with a new line
-func (l Logger) Fatalln(args ...interface{}) {
+// Fatalln prints fatal level with a new line
+func (l Logger) Fatalln(args ...any) {
 	output := fmt.Sprintln(args...)
 	e := Entry{
 		Timestamp: time.Now(),
-		Msg:       output,
-		File:      fileInfo(l.FileInfoDepth),
+		Output:    output,
+		File:      fileInfo(2 + l.FileInfoDepth),
 		Level:     "FATAL",
 		level:     LFatal,
+		Namespace: l.Namespace,
 	}
-	l.createLog(e)
+	createLog(e)
 	Flush()
 	os.Exit(1)
 }
 
-// Handles print to info
-func (l Logger) Print(args ...interface{}) {
+// Print delegates to Info
+func (l Logger) Print(args ...any) {
 	l.Info(args...)
 }
 
-// Handles formatted print to info
-func (l Logger) Printf(format string, args ...interface{}) {
+// Printf delegates to Infof
+func (l Logger) Printf(format string, args ...any) {
 	l.Infof(format, args...)
 }
 
-// Handles print to info with new line
-func (l Logger) Println(args ...interface{}) {
+// Println delegates to Infoln
+func (l Logger) Println(args ...any) {
 	l.Infoln(args...)
 }
