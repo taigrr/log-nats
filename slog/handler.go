@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/taigrr/log-nats/log"
+	"github.com/taigrr/log-nats/v2/log"
 )
 
 // Handler implements [slog.Handler] by converting each [slog.Record] into a

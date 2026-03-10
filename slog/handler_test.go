@@ -9,7 +9,7 @@ import (
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
-	"github.com/taigrr/log-nats/log"
+	"github.com/taigrr/log-nats/v2/log"
 )
 
 func startTestNATS(t *testing.T) (*nats.Conn, func()) {

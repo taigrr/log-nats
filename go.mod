@@ -1,4 +1,4 @@
-module github.com/taigrr/log-nats
+module github.com/taigrr/log-nats/v2
 
 go 1.26.0
 
