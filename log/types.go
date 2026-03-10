@@ -1,15 +1,6 @@
 package log
 
-import (
-	"time"
-
-	"github.com/nats-io/nats.go"
-)
-
-type (
-	LogWriter chan Entry
-	Level     int
-)
+import "time"
 
 const (
 	LTrace Level = iota
@@ -22,18 +13,21 @@ const (
 	LFatal
 )
 
-type Entry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Msg       string    `json:"msg"`
-	File      string    `json:"file"`
-	Level     string    `json:"level"`
-	level     Level
-}
+const DefaultNamespace = "default"
 
-type Logger struct {
-	LogLevel      Level `json:"level"`
-	nc            *nats.Conn
-	initialized   bool
-	FileInfoDepth int
-	SubTemplate   string
-}
+type (
+	Level int
+
+	Entry struct {
+		Timestamp time.Time `json:"timestamp"`
+		Output    string    `json:"output"`
+		File      string    `json:"file"`
+		Level     string    `json:"level"`
+		Namespace string    `json:"namespace"`
+		level     Level
+	}
+	Logger struct {
+		FileInfoDepth int
+		Namespace     string
+	}
+)

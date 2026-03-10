@@ -4,7 +4,7 @@ import (
 	"flag"
 	"time"
 
-	"github.com/taigrr/log-nats/log"
+	"github.com/taigrr/log-nats/v2/log"
 )
 
 func generateLogs() {
