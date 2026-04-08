@@ -277,3 +277,204 @@ func TestLoggerSetInfoDepth(t *testing.T) {
 		t.Errorf("FileInfoDepth = %d, want 3", l.FileInfoDepth)
 	}
 }
+
+func TestLoggerTraceln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-traceln.TRACE")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-traceln")
+	l.Traceln("traceln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "traceln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "traceln message\n")
+	}
+}
+
+func TestLoggerInfoln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-infoln.INFO")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-infoln")
+	l.Infoln("infoln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "infoln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "infoln message\n")
+	}
+}
+
+func TestLoggerNoticef(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-noticef.NOTICE")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-noticef")
+	l.Noticef("notice %d", 42)
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "notice 42" {
+		t.Errorf("output = %q, want %q", e.Output, "notice 42")
+	}
+}
+
+func TestLoggerNoticeln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-noticeln.NOTICE")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-noticeln")
+	l.Noticeln("noticeln msg")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "noticeln msg\n" {
+		t.Errorf("output = %q, want %q", e.Output, "noticeln msg\n")
+	}
+}
+
+func TestLoggerWarnf(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-warnf.WARN")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-warnf")
+	l.Warnf("warn %d", 1)
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "warn 1" {
+		t.Errorf("output = %q, want %q", e.Output, "warn 1")
+	}
+}
+
+func TestLoggerWarnln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-warnln.WARN")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-warnln")
+	l.Warnln("warnln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "warnln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "warnln message\n")
+	}
+}
+
+func TestLoggerErrorf(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-errorf.ERROR")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-errorf")
+	l.Errorf("err: %s", "broke")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "err: broke" {
+		t.Errorf("output = %q, want %q", e.Output, "err: broke")
+	}
+}
+
+func TestLoggerErrorln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-errorln.ERROR")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-errorln")
+	l.Errorln("errorln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "errorln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "errorln message\n")
+	}
+}
+
+func TestLoggerPanicf(t *testing.T) {
+	_, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	l := NewLogger("logger-panicf")
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("expected panic, got nil")
+		}
+	}()
+
+	l.Panicf("panic %d", 42)
+}
+
+func TestLoggerPanicln(t *testing.T) {
+	_, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	l := NewLogger("logger-panicln")
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("expected panic, got nil")
+		}
+	}()
+
+	l.Panicln("panic line")
+}
+
+func TestLoggerPrintln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-println.INFO")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-println")
+	l.Println("println message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "println message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "println message\n")
+	}
+}
