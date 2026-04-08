@@ -620,3 +620,225 @@ func TestConcurrentLogging(t *testing.T) {
 		}
 	}
 }
+
+func TestConnectDefault(t *testing.T) {
+	opts := &natsserver.Options{Host: "127.0.0.1", Port: -1}
+	ns, err := natsserver.NewServer(opts)
+	if err != nil {
+		t.Fatalf("nats server: %v", err)
+	}
+	ns.Start()
+	if !ns.ReadyForConnections(5 * time.Second) {
+		t.Fatal("nats not ready")
+	}
+	defer ns.Shutdown()
+
+	err = ConnectDefault(ns.ClientURL())
+	if err != nil {
+		t.Fatalf("ConnectDefault failed: %v", err)
+	}
+
+	ch := make(chan Entry, 10)
+	connMux.Lock()
+	nc := gNats
+	connMux.Unlock()
+	sub, err := nc.Subscribe("logging.default.INFO", func(msg *nats.Msg) {
+		var e Entry
+		if json.Unmarshal(msg.Data, &e) == nil {
+			ch <- e
+		}
+	})
+	if err != nil {
+		t.Fatalf("subscribe: %v", err)
+	}
+	nc.Flush()
+	defer sub.Unsubscribe()
+
+	Info("connect test")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "connect test" {
+		t.Errorf("output = %q, want %q", e.Output, "connect test")
+	}
+
+	connMux.Lock()
+	gNats.Close()
+	gNats = nil
+	connMux.Unlock()
+}
+
+func TestConnectDefaultBadURL(t *testing.T) {
+	err := ConnectDefault("nats://127.0.0.1:1")
+	if err == nil {
+		t.Error("expected error for unreachable URL")
+	}
+}
+
+func TestSetSubjectTemplate(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	SetSubjectTemplate("logs.{{.Level}}.{{.Namespace}}")
+	defer SetSubjectTemplate("logging.{{.Namespace}}.{{.Level}}")
+
+	ch, sub := subscribe(t, nc, "logs.INFO.custom-tmpl")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("custom-tmpl")
+	l.Info("template test")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "template test" {
+		t.Errorf("output = %q, want %q", e.Output, "template test")
+	}
+}
+
+func TestTraceln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.TRACE")
+	defer sub.Unsubscribe()
+
+	Traceln("traceln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "traceln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "traceln message\n")
+	}
+}
+
+func TestDebugln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.DEBUG")
+	defer sub.Unsubscribe()
+
+	Debugln("debugln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "debugln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "debugln message\n")
+	}
+}
+
+func TestInfoln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.INFO")
+	defer sub.Unsubscribe()
+
+	Infoln("infoln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "infoln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "infoln message\n")
+	}
+}
+
+func TestNoticeln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.NOTICE")
+	defer sub.Unsubscribe()
+
+	Noticeln("noticeln msg")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "noticeln msg\n" {
+		t.Errorf("output = %q, want %q", e.Output, "noticeln msg\n")
+	}
+}
+
+func TestNoticef(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.NOTICE")
+	defer sub.Unsubscribe()
+
+	Noticef("notice %d", 42)
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "notice 42" {
+		t.Errorf("output = %q, want %q", e.Output, "notice 42")
+	}
+}
+
+func TestWarnln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.WARN")
+	defer sub.Unsubscribe()
+
+	Warnln("warnln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "warnln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "warnln message\n")
+	}
+}
+
+func TestErrorln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.ERROR")
+	defer sub.Unsubscribe()
+
+	Errorln("errorln message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "errorln message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "errorln message\n")
+	}
+}
+
+func TestPrintln(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.default.INFO")
+	defer sub.Unsubscribe()
+
+	Println("println message")
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "println message\n" {
+		t.Errorf("output = %q, want %q", e.Output, "println message\n")
+	}
+}
