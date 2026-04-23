@@ -19,7 +19,6 @@ var (
 	gNats       *nats.Conn
 	connMux     sync.Mutex
 	subjectTmpl = "logging.{{.Namespace}}.{{.Level}}"
-	cleanup     sync.Once
 	namespaces  map[string]bool
 	nsMux       sync.RWMutex
 )
@@ -56,16 +55,19 @@ func SetSubjectTemplate(tmpl string) {
 	subjectTmpl = tmpl
 }
 
-// Flush flushes and closes the NATS connection.
+// Flush flushes and closes the current default NATS connection.
+//
+// Calling Flush more than once is safe, and callers may reconnect afterward.
 func Flush() {
-	cleanup.Do(func() {
-		connMux.Lock()
-		if gNats != nil {
-			gNats.Flush()
-			gNats.Close()
-		}
-		connMux.Unlock()
-	})
+	connMux.Lock()
+	nc := gNats
+	gNats = nil
+	connMux.Unlock()
+
+	if nc != nil {
+		nc.Flush()
+		nc.Close()
+	}
 }
 
 func createLog(e Entry) {
