@@ -677,6 +677,49 @@ func TestConnectDefaultBadURL(t *testing.T) {
 	}
 }
 
+func TestFlushAllowsReconnect(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+	serverURL := nc.ConnectedUrl()
+
+	observer, err := nats.Connect(serverURL)
+	if err != nil {
+		t.Fatalf("observer connect failed: %v", err)
+	}
+	defer observer.Close()
+
+	ch, sub := subscribe(t, observer, "logging.default.INFO")
+	defer sub.Unsubscribe()
+
+	Info("before flush")
+	if _, ok := receiveEntry(ch, time.Second); !ok {
+		t.Fatal("timed out waiting for pre-flush log entry")
+	}
+
+	Flush()
+
+	connMux.Lock()
+	if gNats != nil {
+		connMux.Unlock()
+		t.Fatal("expected Flush to clear the default connection")
+	}
+	connMux.Unlock()
+
+	if err := ConnectDefault(serverURL); err != nil {
+		t.Fatalf("reconnect failed: %v", err)
+	}
+	defer Flush()
+
+	Info("after reconnect")
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out waiting for post-reconnect log entry")
+	}
+	if e.Output != "after reconnect" {
+		t.Errorf("output = %q, want %q", e.Output, "after reconnect")
+	}
+}
+
 func TestSetSubjectTemplate(t *testing.T) {
 	nc, cleanup := startTestNATS(t)
 	defer cleanup()
