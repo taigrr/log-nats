@@ -17,6 +17,9 @@ var cleanup sync.Once
 
 func Flush() {
 	cleanup.Do(func() {
+		if gNats == nil {
+			return
+		}
 		gNats.Flush()
 		gNats.Close()
 	})

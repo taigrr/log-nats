@@ -1,6 +1,7 @@
 package log
 
 import (
+	"sync"
 	"testing"
 )
 
@@ -73,4 +74,12 @@ func TestNilConnectionSafety(t *testing.T) {
 		level: LError,
 	}
 	l.createLog(e)
+}
+
+func TestFlushNilConnectionSafety(t *testing.T) {
+	cleanup = sync.Once{}
+	gNats = nil
+
+	Flush()
+	Flush()
 }
