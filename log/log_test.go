@@ -742,6 +742,33 @@ func TestSetSubjectTemplate(t *testing.T) {
 	}
 }
 
+func TestSetSubjectTemplateConcurrentLogging(t *testing.T) {
+	_, cleanup := startTestNATS(t)
+	defer cleanup()
+	defer SetSubjectTemplate("logging.{{.Namespace}}.{{.Level}}")
+
+	const iterations = 100
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			SetSubjectTemplate("logging.{{.Namespace}}.{{.Level}}")
+			SetSubjectTemplate("logs.{{.Level}}.{{.Namespace}}")
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			Info("concurrent template")
+		}
+	}()
+
+	wg.Wait()
+}
+
 func TestTraceln(t *testing.T) {
 	nc, cleanup := startTestNATS(t)
 	defer cleanup()
