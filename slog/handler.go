@@ -141,13 +141,26 @@ func writeAttr(b *strings.Builder, groups []string, a slog.Attr) {
 	if a.Equal(slog.Attr{}) {
 		return
 	}
+
+	if a.Value.Kind() == slog.KindGroup {
+		for _, groupAttr := range a.Value.Group() {
+			writeAttr(b, append(groups, a.Key), groupAttr)
+		}
+		return
+	}
+
 	b.WriteByte(' ')
 	for _, g := range groups {
+		if g == "" {
+			continue
+		}
 		b.WriteString(g)
 		b.WriteByte('.')
 	}
-	b.WriteString(a.Key)
-	b.WriteByte('=')
+	if a.Key != "" {
+		b.WriteString(a.Key)
+		b.WriteByte('=')
+	}
 	b.WriteString(a.Value.String())
 }
 
