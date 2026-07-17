@@ -176,6 +176,29 @@ func TestHandler_GroupAttrWithWithGroup(t *testing.T) {
 	}
 }
 
+func TestHandler_WithAttrsKeepsCurrentGroup(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch := subscribeCh(t, nc, "logging.default.INFO")
+
+	logger := slog.New(
+		NewHandler().
+			WithGroup("request").
+			WithAttrs([]slog.Attr{slog.String("id", "abc")}).
+			WithGroup("http"),
+	)
+	logger.Info("done", slog.Int("status", 200))
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	if e.Output != "done request.id=abc request.http.status=200" {
+		t.Errorf("output = %q, want %q", e.Output, "done request.id=abc request.http.status=200")
+	}
+}
+
 func TestSlogLevelMapping(t *testing.T) {
 	tests := []struct {
 		level slog.Level
