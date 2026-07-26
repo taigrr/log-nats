@@ -3,7 +3,7 @@ module github.com/taigrr/log-nats/v2
 go 1.26.0
 
 require (
-	github.com/nats-io/nats-server/v2 v2.14.2
+	github.com/nats-io/nats-server/v2 v2.14.3
 	github.com/nats-io/nats.go v1.52.0
 )
 
