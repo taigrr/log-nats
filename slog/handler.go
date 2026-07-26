@@ -173,7 +173,7 @@ func writeAttr(b *strings.Builder, groups []string, a slog.Attr) {
 
 	if a.Value.Kind() == slog.KindGroup {
 		for _, groupAttr := range a.Value.Group() {
-			writeAttr(b, append(groups, a.Key), groupAttr)
+			writeAttr(b, append(groups[:len(groups):len(groups)], a.Key), groupAttr)
 		}
 		return
 	}

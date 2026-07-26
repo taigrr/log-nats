@@ -1,5 +1,10 @@
 # log-nats
 
+[![CI](https://github.com/taigrr/log-nats/actions/workflows/ci.yml/badge.svg)](https://github.com/taigrr/log-nats/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/taigrr/log-nats/v2.svg)](https://pkg.go.dev/github.com/taigrr/log-nats/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/taigrr/log-nats/v2)](https://goreportcard.com/report/github.com/taigrr/log-nats/v2)
+[![License: 0BSD](https://img.shields.io/badge/License-0BSD-blue.svg)](LICENSE)
+
 `log-nats` is an opinionated logging library that publishes structured log
 entries to a [NATS](https://nats.io) message bus. It ships with both a
 package-level API (similar to the standard `log` package) and a
