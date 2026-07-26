@@ -79,15 +79,16 @@ func createLog(e Entry) {
 	// Publish to NATS
 	connMux.Lock()
 	nc := gNats
+	subjectTemplate := subjectTmpl
 	connMux.Unlock()
 	if nc != nil {
-		publishToNATS(nc, e)
+		publishToNATS(nc, e, subjectTemplate)
 	}
 }
 
-func publishToNATS(nc *nats.Conn, e Entry) {
+func publishToNATS(nc *nats.Conn, e Entry, subjectTemplate string) {
 	tmpl := template.New("")
-	ut, err := tmpl.Parse(subjectTmpl)
+	ut, err := tmpl.Parse(subjectTemplate)
 	if err != nil {
 		return
 	}
