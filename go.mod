@@ -3,12 +3,12 @@ module github.com/taigrr/log-nats/v2
 go 1.26.0
 
 require (
-	github.com/nats-io/nats-server/v2 v2.14.3
+	github.com/nats-io/nats-server/v2 v2.14.4
 	github.com/nats-io/nats.go v1.52.0
 )
 
 require (
-	github.com/antithesishq/antithesis-sdk-go v0.7.0-default-no-op // indirect
+	github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/klauspost/compress v1.19.0 // indirect
 	github.com/minio/highwayhash v1.0.4 // indirect
