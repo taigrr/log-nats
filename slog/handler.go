@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/taigrr/log-nats/v2/log"
 )
@@ -190,7 +193,32 @@ func writeAttr(b *strings.Builder, groups []string, a slog.Attr) {
 		b.WriteString(a.Key)
 		b.WriteByte('=')
 	}
-	b.WriteString(a.Value.String())
+	b.WriteString(formatAttrValue(a.Value))
+}
+
+func formatAttrValue(v slog.Value) string {
+	value := v.String()
+	if v.Kind() != slog.KindString || !needsQuoting(value) {
+		return value
+	}
+	return strconv.Quote(value)
+}
+
+func needsQuoting(value string) bool {
+	if value == "" {
+		return true
+	}
+	for i := 0; i < len(value); {
+		r, size := utf8.DecodeRuneInString(value[i:])
+		if r == utf8.RuneError && size == 1 {
+			return true
+		}
+		if r == ' ' || r == '=' || r == '"' || r < 0x20 || r == 0x7f || !unicode.IsPrint(r) {
+			return true
+		}
+		i += size
+	}
+	return false
 }
 
 func slogLevelToString(l slog.Level) string {

@@ -4,11 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      gomod:
+        patterns:
+          - "*"
   - package-ecosystem: gomod
     directory: /_example
     schedule:
       interval: weekly
+    groups:
+      gomod:
+        patterns:
+          - "*"
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

@@ -176,6 +176,30 @@ func TestHandler_GroupAttrWithWithGroup(t *testing.T) {
 	}
 }
 
+func TestHandler_QuotesAmbiguousStringAttrs(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch := subscribeCh(t, nc, "logging.default.INFO")
+
+	logger := slog.New(NewHandler())
+	logger.Info("request",
+		slog.String("path", "/search?q=log nats"),
+		slog.String("empty", ""),
+		slog.String("esc", "\x1b[31mred\x1b[0m"),
+		slog.String("plain", "ok"),
+	)
+
+	e, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out")
+	}
+	want := `request path="/search?q=log nats" empty="" esc="\x1b[31mred\x1b[0m" plain=ok`
+	if e.Output != want {
+		t.Errorf("output = %q, want %q", e.Output, want)
+	}
+}
+
 func TestHandler_WithAttrsKeepsCurrentGroup(t *testing.T) {
 	nc, cleanup := startTestNATS(t)
 	defer cleanup()
