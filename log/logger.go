@@ -292,6 +292,7 @@ func (l Logger) Panic(args ...any) {
 	createLog(e)
 	if len(args) > 0 {
 		if err, ok := args[0].(error); ok {
+			Flush()
 			panic(err)
 		}
 	}
@@ -313,6 +314,7 @@ func (l Logger) Panicf(format string, args ...any) {
 	createLog(e)
 	if len(args) > 0 {
 		if err, ok := args[0].(error); ok {
+			Flush()
 			panic(err)
 		}
 	}
@@ -334,6 +336,7 @@ func (l Logger) Panicln(args ...any) {
 	createLog(e)
 	if len(args) > 0 {
 		if err, ok := args[0].(error); ok {
+			Flush()
 			panic(err)
 		}
 	}
