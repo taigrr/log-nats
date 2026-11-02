@@ -43,6 +43,9 @@ type Option func(*Handler)
 // WithNamespace sets the log-nats namespace for entries produced by this
 // handler. If empty, [log.DefaultNamespace] is used.
 func WithNamespace(ns string) Option {
+	if ns == "" {
+		ns = log.DefaultNamespace
+	}
 	return func(h *Handler) {
 		h.namespace = ns
 	}
