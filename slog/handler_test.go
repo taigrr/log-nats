@@ -240,3 +240,20 @@ func TestSlogLevelMapping(t *testing.T) {
 		}
 	}
 }
+
+func TestHandler_EmptyNamespaceUsesDefault(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch := subscribeCh(t, nc, "logging.default.INFO")
+	logger := slog.New(NewHandler(WithNamespace("custom"), WithNamespace("")))
+	logger.Info("default namespace")
+
+	entry, ok := receiveEntry(ch, time.Second)
+	if !ok {
+		t.Fatal("timed out waiting for entry on default namespace subject")
+	}
+	if entry.Namespace != log.DefaultNamespace {
+		t.Errorf("namespace = %q, want %q", entry.Namespace, log.DefaultNamespace)
+	}
+}
