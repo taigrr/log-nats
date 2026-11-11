@@ -1,6 +1,7 @@
 package log
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -227,6 +228,32 @@ func TestLoggerPanic(t *testing.T) {
 	}()
 
 	l.Panic("panic message")
+}
+
+func TestLoggerPanicErrorFlushesBeforePanic(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	ch, sub := subscribe(t, nc, "logging.logger-panic-error.PANIC")
+	defer sub.Unsubscribe()
+
+	l := NewLogger("logger-panic-error")
+	panicErr := errors.New("panic error")
+	defer func() {
+		r := recover()
+		if r != panicErr {
+			t.Errorf("panic = %v, want %v", r, panicErr)
+		}
+		e, ok := receiveEntry(ch, time.Second)
+		if !ok {
+			t.Fatal("timed out waiting for panic log entry")
+		}
+		if e.Output != panicErr.Error() {
+			t.Errorf("output = %q, want %q", e.Output, panicErr.Error())
+		}
+	}()
+
+	l.Panic(panicErr)
 }
 
 func TestLoggerPrint(t *testing.T) {
