@@ -21,7 +21,8 @@ import (
 //
 // Attributes accumulated via [Handler.WithAttrs] are prepended to the log
 // message as key=value pairs. Groups set via [Handler.WithGroup] prefix
-// attribute keys with "group.".
+// attribute keys with "group.". Keys containing whitespace, control characters,
+// quotes or equals signs are quoted after the group prefix is applied.
 type Handler struct {
 	namespace string
 	level     slog.Level
@@ -185,15 +186,24 @@ func writeAttr(b *strings.Builder, groups []string, a slog.Attr) {
 	}
 
 	b.WriteByte(' ')
+	var key strings.Builder
 	for _, g := range groups {
 		if g == "" {
 			continue
 		}
-		b.WriteString(g)
-		b.WriteByte('.')
+		key.WriteString(g)
+		key.WriteByte('.')
+	}
+	key.WriteString(a.Key)
+	keyText := key.String()
+	if keyText != "" {
+		if needsQuoting(keyText) {
+			b.WriteString(strconv.Quote(keyText))
+		} else {
+			b.WriteString(keyText)
+		}
 	}
 	if a.Key != "" {
-		b.WriteString(a.Key)
 		b.WriteByte('=')
 	}
 	b.WriteString(formatAttrValue(a.Value))
