@@ -257,3 +257,42 @@ func TestHandler_EmptyNamespaceUsesDefault(t *testing.T) {
 		t.Errorf("namespace = %q, want %q", entry.Namespace, log.DefaultNamespace)
 	}
 }
+
+// countingValue exposes repeated evaluation of attributes bound to a handler.
+type countingValue struct {
+	calls int
+}
+
+func (value *countingValue) LogValue() slog.Value {
+	value.calls++
+	return slog.IntValue(value.calls)
+}
+
+func TestHandler_WithAttrsResolvesOnce(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+	ch := subscribeCh(t, nc, "logging.default.INFO")
+	value := &countingValue{}
+	logger := slog.New(NewHandler()).With(slog.Group("bound", slog.Any("value", value)))
+	if value.calls != 1 {
+		t.Errorf("With evaluated LogValue %d times, want 1", value.calls)
+	}
+	derived := logger.WithGroup("request").With("id", "abc")
+	for _, logger := range []*slog.Logger{logger, derived, logger} {
+		logger.Info("event")
+		entry, ok := receiveEntry(ch, time.Second)
+		if !ok {
+			t.Fatal("timed out waiting for entry")
+		}
+		want := "event bound.value=1"
+		if logger == derived {
+			want += " request.id=abc"
+		}
+		if entry.Output != want {
+			t.Errorf("output = %q, want %q", entry.Output, want)
+		}
+	}
+	if value.calls != 1 {
+		t.Errorf("LogValue evaluated %d times, want 1", value.calls)
+	}
+}
