@@ -25,13 +25,8 @@ import (
 type Handler struct {
 	namespace string
 	level     slog.Level
-	attrs     []groupedAttr
+	attrs     string
 	groups    []string
-}
-
-type groupedAttr struct {
-	groups []string
-	attr   slog.Attr
 }
 
 // ensure interface compliance at compile time.
@@ -83,9 +78,7 @@ func (h *Handler) Handle(_ context.Context, r slog.Record) error {
 	b.WriteString(r.Message)
 
 	// Append pre-collected attrs.
-	for _, a := range h.attrs {
-		writeAttr(&b, a.groups, a.attr)
-	}
+	b.WriteString(h.attrs)
 
 	// Append record-level attrs.
 	r.Attrs(func(a slog.Attr) bool {
@@ -117,15 +110,17 @@ func (h *Handler) Handle(_ context.Context, r slog.Record) error {
 	return nil
 }
 
-// WithAttrs returns a new Handler with the given attributes appended.
+// WithAttrs returns a new Handler with the given attributes resolved and appended.
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	h2 := h.clone()
+	// Format bound attributes now so LogValuers are resolved once, not on
+	// every record. The immutable result is safe to share with derived handlers.
+	var bound strings.Builder
+	bound.WriteString(h.attrs)
 	for _, attr := range attrs {
-		h2.attrs = append(h2.attrs, groupedAttr{
-			groups: cloneStrings(h.groups),
-			attr:   attr,
-		})
+		writeAttr(&bound, h.groups, attr)
 	}
+	h2.attrs = bound.String()
 	return h2
 }
 
@@ -146,29 +141,9 @@ func (h *Handler) clone() *Handler {
 		level:     h.level,
 		groups:    make([]string, len(h.groups)),
 	}
-	h2.attrs = cloneAttrs(h.attrs)
+	h2.attrs = h.attrs
 	copy(h2.groups, h.groups)
 	return h2
-}
-
-func cloneAttrs(attrs []groupedAttr) []groupedAttr {
-	cloned := make([]groupedAttr, len(attrs))
-	for i, attr := range attrs {
-		cloned[i] = groupedAttr{
-			groups: cloneStrings(attr.groups),
-			attr:   attr.attr,
-		}
-	}
-	return cloned
-}
-
-func cloneStrings(values []string) []string {
-	if len(values) == 0 {
-		return nil
-	}
-	cloned := make([]string, len(values))
-	copy(cloned, values)
-	return cloned
 }
 
 func writeAttr(b *strings.Builder, groups []string, a slog.Attr) {
